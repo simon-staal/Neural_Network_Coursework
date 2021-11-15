@@ -26,5 +26,13 @@ def test_preprocessor():
     print(x_train_rev.std(axis=0) - x_train.std(axis=0))
 
 
+def test():
+    m = np.array([[1, 2, 3], [4, 5, 6]])
+    r = np.array([3, 2, 1])
+    print(m + r)
+    print(r)
+    print(m.shape)
+    print(m.shape[0])
+
 if __name__ == "__main__":
-    test_preprocessor()
+    test()

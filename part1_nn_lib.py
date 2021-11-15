@@ -226,9 +226,10 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W = None # Dimensions of W: n_in * n_out (each neuron has n_in weights)
+        self._W = xavier_init((n_in, n_out)) # Dimensions of W: n_in * n_out (each neuron has n_in weights)
         self._b = np.zeros((n_out,)) # Each neuron in layer has it's own bias
 
+        # It makes sense to leave these as None for now
         self._cache_current = None
         self._grad_W_current = None
         self._grad_b_current = None
@@ -253,7 +254,11 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        
+        # _cache_current dimensions = (n_in, batch_size)
+        self._cache_current = x.transpose() # Required for calculating dLoss/dW
+
+        return np.matmul(x, self._W) + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -276,7 +281,15 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        # (n_in, batch_size) * (batch_size, n_out) = (n_in, n_out)
+        self._grad_W_current = np.matmul(self._cache_current, grad_z) # Matches dimensions of W
+
+        batch_size = grad_z.shape[0]
+        # (1, batch_size) * (batch_size, n_out) = (1, n_out) ravel => (n_out, )
+        self._grad_b_current = np.ravel(np.matmul(np.ones(1, batch_size), grad_z)) # Matches dimensions of b
+
+        return np.matmul(grad_z, self._W.transpose()) # see Lec 5 slide 28
 
         #######################################################################
         #                       ** END OF YOUR CODE **
