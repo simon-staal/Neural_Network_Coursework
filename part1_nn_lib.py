@@ -226,8 +226,8 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W = None
-        self._b = None
+        self._W = None # Dimensions of W: n_in * n_out (each neuron has n_in weights)
+        self._b = np.zeros((n_out,)) # Each neuron in layer has it's own bias
 
         self._cache_current = None
         self._grad_W_current = None
@@ -544,8 +544,8 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
-
+        self.mu = data.mean(axis=0) # Stores mean of each feature of the data
+        self.sigma = data.std(axis=0) # Stores sd of each feature of the data
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -563,7 +563,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return (data - self.mu) / self.sigma
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -582,7 +582,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return data * self.sigma + self.mu
 
         #######################################################################
         #                       ** END OF YOUR CODE **
