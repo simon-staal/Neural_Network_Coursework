@@ -24,14 +24,14 @@ def test_linear():
     print(layer._W)
     print(layer._b)
     print(layer._cache_current)
-    print(layer._grad_W_current)
-    print(layer._grad_b_current)
+    print(layer._grad_W_current.shape == layer._W.shape)
+    print(layer._grad_b_current.shape == layer._b.shape)
 
     d_in = x_train_pre[:4, :]
     print(d_in.shape)
     out = layer(d_in)
     print(out)
-    print()
+    print(np.isclose(layer._cache_current.transpose(), d_in))
 
 
 def test_preprocessor():
@@ -68,4 +68,4 @@ def test():
     print(m.shape[0])
 
 if __name__ == "__main__":
-    test_preprocessor()
+    test_linear()
