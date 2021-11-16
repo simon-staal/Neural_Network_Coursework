@@ -382,12 +382,10 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        res = grad_z
         gradient = grad_z
-        #???????????? this is very wrong
+        #????
         for layer in self._layers[::-1]:
             gradient = layer.backward(gradient)
-            res *= gradient
         return gradient
         
 
@@ -406,7 +404,9 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for layer in self.layers:
+            layer.update_params(learning_rate)
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
