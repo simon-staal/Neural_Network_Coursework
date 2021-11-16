@@ -1,6 +1,39 @@
 import part1_nn_lib as lib
 import numpy as np
 
+def test_linear():
+    dat = np.loadtxt("iris.dat")
+    np.random.shuffle(dat)
+
+    x = dat[:, :4]
+    y = dat[:, 4:]
+
+    split_idx = int(0.8 * len(x))
+
+    x_train = x[:split_idx]
+    y_train = y[:split_idx]
+    x_val = x[split_idx:]
+    y_val = y[split_idx:]
+
+    prep_input = lib.Preprocessor(x_train)
+
+    x_train_pre = prep_input.apply(x_train)
+    x_val_pre = prep_input.apply(x_val)
+
+    layer = lib.LinearLayer(4, 3)
+    print(layer._W)
+    print(layer._b)
+    print(layer._cache_current)
+    print(layer._grad_W_current)
+    print(layer._grad_b_current)
+
+    d_in = x_train_pre[:4, :]
+    print(d_in.shape)
+    out = layer(d_in)
+    print(out)
+    print()
+
+
 def test_preprocessor():
     dat = np.loadtxt("iris.dat")
     np.random.shuffle(dat)
@@ -18,12 +51,12 @@ def test_preprocessor():
     prep_input = lib.Preprocessor(x_train)
 
     x_train_pre = prep_input.apply(x_train)
-    print(x_train_pre.mean(axis=0))
-    print(x_train_pre.std(axis=0))
+    print(x_train_pre[x_train_pre<0])
+    print(x_train_pre[x_train_pre>1])
 
     x_train_rev = prep_input.revert(x_train_pre)
-    print(x_train_rev.mean(axis=0) - x_train.mean(axis=0))
-    print(x_train_rev.std(axis=0) - x_train.std(axis=0))
+    diff = np.isclose(x_train_rev, x_train)
+    print(diff[diff == False])
 
 
 def test():
@@ -35,4 +68,4 @@ def test():
     print(m.shape[0])
 
 if __name__ == "__main__":
-    test()
+    test_preprocessor()

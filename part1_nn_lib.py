@@ -230,9 +230,9 @@ class LinearLayer(Layer):
         self._b = np.zeros((n_out,)) # Each neuron in layer has it's own bias
 
         # It makes sense to leave these as None for now
-        self._cache_current = None
-        self._grad_W_current = None
-        self._grad_b_current = None
+        self._cache_current = None # We don't know batch size
+        self._grad_W_current = np.empty((n_in, n_out))
+        self._grad_b_current = np.empty((n_out,))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -309,7 +309,11 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        
+        self._W -= learning_rate * self._grad_W_current
+        self._b -= learning_rate * self._grad_b_current
+
+        return
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -560,8 +564,8 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self.mu = data.mean(axis=0) # Stores mean of each feature of the data
-        self.sigma = data.std(axis=0) # Stores sd of each feature of the data
+        self.min = data.min(axis=0) # Stores mean of each feature of the data
+        self.max = data.max(axis=0) # Stores sd of each feature of the data
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -579,7 +583,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return (data - self.mu) / self.sigma
+        return (data - self.min) / (self.max - self.min)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -598,7 +602,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return data * self.sigma + self.mu
+        return data * (self.max - self.min) + self.min
 
         #######################################################################
         #                       ** END OF YOUR CODE **
