@@ -257,7 +257,9 @@ class LinearLayer(Layer):
         
         # _cache_current dimensions = (n_in, batch_size)
         self._cache_current = x.transpose() # Required for calculating dLoss/dW
-
+        
+        # (batch_size, n_in) * (n_in, n_out) = (batch_size, n_out)
+        # +self._b performs row-wise element addition (b is 1D matrix with length n_out)
         return np.matmul(x, self._W) + self._b
 
         #######################################################################
@@ -289,6 +291,7 @@ class LinearLayer(Layer):
         # (1, batch_size) * (batch_size, n_out) = (1, n_out) ravel => (n_out, )
         self._grad_b_current = np.ravel(np.matmul(np.ones(1, batch_size), grad_z)) # Matches dimensions of b
 
+        # (batch_size, n_out) * (n_out, n_in) = (batch_size, n_in)
         return np.matmul(grad_z, self._W.transpose()) # see Lec 5 slide 28
 
         #######################################################################
