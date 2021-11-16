@@ -326,7 +326,16 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._layers = None
+        self._layers = []
+        n_in = input_dim
+        for layer, activation in zip(neurons, activations):
+            layers.append(LinearLayer(n_in, layer))
+            if activation == "relu":
+                layers.append(ReluLayer())
+            else if activation == "sigmoid":
+                layers.append(SigmoidLayer())
+            n_in = layer
+
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -345,8 +354,12 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return np.zeros((1, self.neurons[-1])) # Replace with your own code
-
+        layerin = x
+        for layer in self._layers:
+            layerout = layer.forward(layerin)
+            layerin = layerout
+        return layerout # Replace with your own code
+        
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -369,7 +382,14 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        res = grad_z
+        gradient = grad_z
+        #???????????? this is very wrong
+        for layer in self._layers[::-1]:
+            gradient = layer.backward(gradient)
+            res *= gradient
+        return gradient
+        
 
         #######################################################################
         #                       ** END OF YOUR CODE **
