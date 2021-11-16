@@ -54,6 +54,7 @@ def test_linear():
     layer.update_params(0.001)
     print(layer._W)
     print(layer._b)
+    
 
 
 

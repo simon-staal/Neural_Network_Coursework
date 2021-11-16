@@ -374,11 +374,11 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        layerin = x
+        layer_in = x
         for layer in self._layers:
-            layerout = layer.forward(layerin)
-            layerin = layerout
-        return layerout # Replace with your own code
+            layer_out = layer.forward(layer_in)
+            layer_in = layer_out
+        return layer_out # Replace with your own code
         
         #######################################################################
         #                       ** END OF YOUR CODE **
