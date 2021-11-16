@@ -289,7 +289,7 @@ class LinearLayer(Layer):
 
         batch_size = grad_z.shape[0]
         # (1, batch_size) * (batch_size, n_out) = (1, n_out) ravel => (n_out, )
-        self._grad_b_current = np.ravel(np.matmul(np.ones(1, batch_size), grad_z)) # Matches dimensions of b
+        self._grad_b_current = np.ravel(np.matmul(np.ones((1, batch_size)), grad_z)) # Matches dimensions of b
 
         # (batch_size, n_out) * (n_out, n_in) = (batch_size, n_in)
         return np.matmul(grad_z, self._W.transpose()) # see Lec 5 slide 28
