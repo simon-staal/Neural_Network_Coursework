@@ -121,7 +121,7 @@ class SigmoidLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        return np.vectorize(1/( 1+ math.exp(-x)))
+        return np.vectorize(1/( 1+ np.exp(-x)))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -144,7 +144,7 @@ class SigmoidLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         y = self._cache_current
-        sig = np.vectorize(1/(1+math.exp(-y)))
+        sig = np.vectorize(1/(1+np.exp(-y)))
         return np.multiply(grad_z, np.multiply(sig, (1-sig)))
 
         #######################################################################
