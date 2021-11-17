@@ -184,7 +184,8 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        relu = np.vectorize(x if x>0 else 0)
+        relu = x
+        relu[x<0]=0
         return relu
 
         #######################################################################
@@ -209,7 +210,8 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         y = self._cache_current
-        return np.multiply(grad_z, (np.vectorize(1 if y > 0  else 0)))
+        temp = (y > 0) *1
+        return grad_z * temp
 
         #######################################################################
         #                       ** END OF YOUR CODE **
