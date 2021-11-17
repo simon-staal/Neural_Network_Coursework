@@ -116,12 +116,14 @@ class SigmoidLayer(Layer):
 
         Returns:
             {np.ndarray} -- Output array of shape (batch_size, n_out)
+
+        Note: n_in and n_out are the same for this layer
         """
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        return np.vectorize(1/( 1+ np.exp(-x)))
+        return np.reciprocal(np.exp(-x) + 1)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -139,13 +141,15 @@ class SigmoidLayer(Layer):
         Returns:
             {np.ndarray} -- Array containing gradient with repect to layer
                 input, of shape (batch_size, n_in).
+        
+        Note: n_in and n_out are the same for this layer
         """
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        y = self._cache_current
-        sig = np.vectorize(1/(1+np.exp(-y)))
-        return np.multiply(grad_z, np.multiply(sig, (1-sig)))
+        y = self._cache_current # dim = (batch_size, n_in)
+        sig = np.reciprocal(np.exp(-y) + 1)
+        return grad_z * sig * (1-sig)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -357,7 +361,7 @@ class MultiLayerNetwork(object):
             layers.append(LinearLayer(n_in, layer))
             if activation == "relu":
                 layers.append(ReluLayer())
-            else if activation == "sigmoid":
+            elif activation == "sigmoid":
                 layers.append(SigmoidLayer())
             n_in = layer
 
