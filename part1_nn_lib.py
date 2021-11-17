@@ -231,12 +231,13 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._W = None # Dimensions of W: n_in * n_out (each neuron has n_in weights)
+        self._W = xavier_init((n_in, n_out)) # Dimensions of W: n_in * n_out (each neuron has n_in weights)
         self._b = np.zeros((n_out,)) # Each neuron in layer has it's own bias
 
-        self._cache_current = None
-        self._grad_W_current = None
-        self._grad_b_current = None
+        # It makes sense to leave these as None for now
+        self._cache_current = None # We don't know batch size
+        self._grad_W_current = np.empty((n_in, n_out))
+        self._grad_b_current = np.empty((n_out,))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -258,7 +259,13 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        
+        # _cache_current dimensions = (n_in, batch_size)
+        self._cache_current = x.transpose() # Required for calculating dLoss/dW
+        
+        # (batch_size, n_in) * (n_in, n_out) = (batch_size, n_out)
+        # +self._b performs row-wise element addition (b is 1D matrix with length n_out)
+        return np.matmul(x, self._W) + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -281,7 +288,16 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+
+        # (n_in, batch_size) * (batch_size, n_out) = (n_in, n_out)
+        self._grad_W_current = np.matmul(self._cache_current, grad_z) # Matches dimensions of W
+
+        batch_size = grad_z.shape[0]
+        # (1, batch_size) * (batch_size, n_out) = (1, n_out) ravel => (n_out, )
+        self._grad_b_current = np.ravel(np.matmul(np.ones((1, batch_size)), grad_z)) # Matches dimensions of b
+
+        # (batch_size, n_out) * (n_out, n_in) = (batch_size, n_in)
+        return np.matmul(grad_z, self._W.transpose()) # see Lec 5 slide 28
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -298,7 +314,11 @@ class LinearLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        
+        self._W -= learning_rate * self._grad_W_current
+        self._b -= learning_rate * self._grad_b_current
+
+        return
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -549,8 +569,8 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self.mu = data.mean(axis=0) # Stores mean of each feature of the data
-        self.sigma = data.std(axis=0) # Stores sd of each feature of the data
+        self.min = data.min(axis=0) # Stores mean of each feature of the data
+        self.max = data.max(axis=0) # Stores sd of each feature of the data
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -568,7 +588,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return (data - self.mu) / self.sigma
+        return (data - self.min) / (self.max - self.min)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -587,7 +607,7 @@ class Preprocessor(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        return data * self.sigma + self.mu
+        return data * (self.max - self.min) + self.min
 
         #######################################################################
         #                       ** END OF YOUR CODE **
