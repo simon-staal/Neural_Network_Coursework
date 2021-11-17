@@ -563,10 +563,6 @@ class Trainer(object):
 
             for i in range(0, number_of_batches):
                 output = self.network.forward(input_batches[i])
-                print(output)
-                print(input_batches[i])
-                print (len(input_batches[i]))
-                print (len(target_batches[i]))
                 self._loss_layer.forward(output,target_batches[i])
                 self.network.backward(self._loss_layer.backward())
                 self.network.update_params(self.learning_rate)
