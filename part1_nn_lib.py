@@ -120,12 +120,12 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._cache_current = x
+        return np.vectorize(1/( 1+ math.exp(-x)))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
-
     def backward(self, grad_z):
         """
         Given `grad_z`, the gradient of some scalar (e.g. loss) with respect to
@@ -143,7 +143,9 @@ class SigmoidLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        y = self._cache_current
+        sig = np.vectorize(1/(1+math.exp(-y)))
+        return np.multiply(grad_z, np.multiply(sig, (1-sig)))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -177,7 +179,9 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        self._cache_current = x
+        relu = np.vectorize(x if x>0 else 0)
+        return relu
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -200,7 +204,8 @@ class ReluLayer(Layer):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        y = self._cache_current
+        return np.multiply(grad_z, (np.vectorize(1 if y > 0  else 0)))
 
         #######################################################################
         #                       ** END OF YOUR CODE **
