@@ -359,11 +359,11 @@ class MultiLayerNetwork(object):
         self._layers = []
         n_in = input_dim
         for layer, activation in zip(neurons, activations):
-            layers.append(LinearLayer(n_in, layer))
+            self._layers.append(LinearLayer(n_in, layer))
             if activation == "relu":
-                layers.append(ReluLayer())
+                self._layers.append(ReluLayer())
             elif activation == "sigmoid":
-                layers.append(SigmoidLayer())
+                self._layers.append(SigmoidLayer())
             n_in = layer
 
         #######################################################################
@@ -388,7 +388,7 @@ class MultiLayerNetwork(object):
         for layer in self._layers:
             layer_out = layer.forward(layer_in)
             layer_in = layer_out
-        return layer_out # Replace with your own code
+        return layer_out
         
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -413,7 +413,6 @@ class MultiLayerNetwork(object):
         #                       ** START OF YOUR CODE **
         #######################################################################
         gradient = grad_z
-        #????
         for layer in self._layers[::-1]:
             gradient = layer.backward(gradient)
         return gradient
@@ -434,10 +433,9 @@ class MultiLayerNetwork(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        for layer in self.layers:
-            layer.update_params(learning_rate)
-
-
+        for layer in self._layers:
+            if type(layer) is LinearLayer: layer.update_params(learning_rate)
+           
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
