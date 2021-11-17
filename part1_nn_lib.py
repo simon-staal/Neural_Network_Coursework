@@ -184,7 +184,8 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         self._cache_current = x
-        relu = np.vectorize(x if x>0 else 0)
+        relu = x
+        relu[x<0]=0
         return relu
 
         #######################################################################
@@ -209,7 +210,8 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         y = self._cache_current
-        return np.multiply(grad_z, (np.vectorize(1 if y > 0  else 0)))
+        temp = (y > 0) *1
+        return grad_z * temp
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -496,7 +498,12 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        self._loss_layer = None
+        if loss_fun == "mse":
+            self._loss_layer = MSELossLayer()
+        elif loss_fun == "cross_entropy":
+            self._loss_layer = CrossEntropyLossLayer()
+        else:
+            raise Exception("loss_fun was not mse or cross_entropy.")
         #######################################################################
         #                       ** END OF YOUR CODE **
         #######################################################################
@@ -519,7 +526,8 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        reorder = np.random.permutation(len(input_dataset))
+        return (input_dataset[reorder], target_dataset[reorder])
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -548,7 +556,24 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        for j in range(0, self.nb_epoch):
+            if self.shuffle_flag: 
+                Trainer.shuffle(input_dataset, target_dataset)
+            
+            number_of_batches = int(input_dataset.shape[0] / self.batch_size)
+            input_batches = np.array_split(input_dataset, number_of_batches)
+            target_batches = np.array_split(target_dataset, number_of_batches)
+
+            for i in range(0, number_of_batches):
+                output = self.network.forward(input_batches[i])
+                print(output)
+                print(input_batches[i])
+                print (len(input_batches[i]))
+                print (len(target_batches[i]))
+                self._loss_layer.forward(output,target_batches[i])
+                self.network.backward(self._loss_layer.backward())
+                self.network.update_params(self.learning_rate)
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -568,7 +593,7 @@ class Trainer(object):
         #######################################################################
         #                       ** START OF YOUR CODE **
         #######################################################################
-        pass
+        return self._loss_layer.forward(self.network.forward(input_dataset), target_dataset)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
