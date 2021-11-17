@@ -82,6 +82,7 @@ def test_linear():
     out = layer(d_in)
     print(out)
     assert(np.isclose(layer._cache_current.transpose(), d_in).all())
+    assert(np.isclose(out, np.matmul(d_in, layer._W) + layer._b).all())
 
     print("Testing Backwards")
     grad_z = np.array([[1, -3, 5], [0.6, -2.7, 4.3], [1.2, -3.2, 4.9], [0.8, -2.9, 5.1]]) # (4, 3)
@@ -93,6 +94,9 @@ def test_linear():
     print("New grad values")
     print(layer._grad_W_current)
     print(layer._grad_b_current)
+    assert(np.isclose(layer._grad_W_current, np.matmul(layer._cache_current, grad_z)).all())
+    assert(np.isclose(layer._grad_b_current, np.ravel(np.matmul(np.ones((1, grad_z.shape[0])), grad_z))).all())
+    assert(np.isclose(grad_x, np.matmul(grad_z, layer._W.transpose())).all())
 
     print("Testing update_params")
     print("Old param values")
@@ -141,4 +145,4 @@ def test():
     print(m.shape[0])
 
 if __name__ == "__main__":
-    test_activation()
+    test_linear()

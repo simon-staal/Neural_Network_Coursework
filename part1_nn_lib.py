@@ -269,7 +269,7 @@ class LinearLayer(Layer):
         
         # (batch_size, n_in) * (n_in, n_out) = (batch_size, n_out)
         # +self._b performs row-wise element addition (b is 1D matrix with length n_out)
-        return np.matmul(x, self._W) + self._b
+        return x @ self._W + self._b
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -294,14 +294,14 @@ class LinearLayer(Layer):
         #######################################################################
 
         # (n_in, batch_size) * (batch_size, n_out) = (n_in, n_out)
-        self._grad_W_current = np.matmul(self._cache_current, grad_z) # Matches dimensions of W
+        self._grad_W_current = self._cache_current @ grad_z # Matches dimensions of W
 
         batch_size = grad_z.shape[0]
         # (1, batch_size) * (batch_size, n_out) = (1, n_out) ravel => (n_out, )
-        self._grad_b_current = np.ravel(np.matmul(np.ones((1, batch_size)), grad_z)) # Matches dimensions of b
+        self._grad_b_current = np.ravel(np.ones((1, batch_size)) @ grad_z) # Matches dimensions of b
 
         # (batch_size, n_out) * (n_out, n_in) = (batch_size, n_in)
-        return np.matmul(grad_z, self._W.transpose()) # see Lec 5 slide 28
+        return grad_z @ self._W.T # see Lec 5 slide 28
 
         #######################################################################
         #                       ** END OF YOUR CODE **
