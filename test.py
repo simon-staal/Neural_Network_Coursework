@@ -42,6 +42,28 @@ def test_activation():
     sig = np.reciprocal(np.exp(-layer._cache_current) + 1)
     assert(np.isclose(grad_x, grad_z * sig * (1 - sig)).all())
 
+    print("=======Testing Relu========")
+
+    print("Testing Constructor")
+    layer = lib.ReluLayer()
+
+    print("Testing Forward")
+    d_in = x_train_pre[:4, :]
+    out = layer(d_in)
+    assert(out.shape == d_in.shape)
+    assert(np.isclose(layer._cache_current, d_in).all())
+    test_out = d_in
+    test_out[test_out < 0] = 0
+    assert(np.isclose(out, test_out).all())
+
+    print("Testing Backward")
+    grad_z = np.array([[1, -3, 5, 2.6], [0.6, -2.7, 4.3, 2.04], [1.2, -3.2, 4.9, 2.4], [0.8, -2.9, 5.1, 3.1]]) # (4, 4)
+    grad_x = layer.backward(grad_z)
+    assert(grad_x.shape == grad_z.shape)
+    print(grad_x)
+    assert(np.isclose(grad_x, grad_z * (layer._cache_current > 0).astype(int)).all())
+
+
 
 
 
@@ -145,4 +167,4 @@ def test():
     print(m.shape[0])
 
 if __name__ == "__main__":
-    test_linear()
+    test_activation()

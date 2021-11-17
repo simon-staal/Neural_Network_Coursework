@@ -185,7 +185,7 @@ class ReluLayer(Layer):
         #######################################################################
         self._cache_current = x
         relu = x
-        relu[x<0]=0
+        relu[relu<0]=0
         return relu
 
         #######################################################################
@@ -210,8 +210,7 @@ class ReluLayer(Layer):
         #                       ** START OF YOUR CODE **
         #######################################################################
         y = self._cache_current
-        temp = (y > 0) *1
-        return grad_z * temp
+        return grad_z * (y > 0).astype(int)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
