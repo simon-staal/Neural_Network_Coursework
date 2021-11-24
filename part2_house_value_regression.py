@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 import pickle
 import numpy as np
 import pandas as pd
@@ -6,7 +7,7 @@ from sklearn import preprocessing, impute
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [8, 1], activations = ["relu", "relu"], learning_rate = 0.01, loss_fun = "cross_entropy"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [8, 1], activations = ["relu", "relu"], learning_rate = 0.01, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -40,18 +41,18 @@ class Regressor():
         layers = []
         n_in = self.input_size
         for layer, activation in zip(neurons, activations):
-            layers.append(torch.nn.Linear(n_in, layer))
+            layers.append(nn.Linear(n_in, layer))
             if activation == "relu":
-                layers.append(torch.nn.ReLU())
+                layers.append(nn.ReLU())
             elif activation == "sigmoid":
-                layers.append(torch.nn.Sigmoid())
+                layers.append(nn.Sigmoid())
             n_in = layer
         
-        self.net = torch.nn.Sequential(*layers) # Stack-Overflow Bless
+        self.net = nn.Sequential(*layers) # Stack-Overflow Bless
         self.learning_rate = learning_rate
 
         if loss_fun == "mse":
-            self.loss_layer = torch.nn.MSELoss()
+            self.loss_layer = nn.MSELoss()
         else:
             raise Exception(f'Undefined loss_fun: {loss_fun}')
         
@@ -87,6 +88,7 @@ class Regressor():
         # First we handle the strings
         # Deal with empty cells in string
         if training: self.string_imp = x['ocean_proximity'].mode()[0]
+        pd.options.mode.chained_assignment = None
         x['ocean_proximity'] = x.loc[:, ['ocean_proximity']].fillna(value=self.string_imp)
 
         # Replace strings with binary values
@@ -198,6 +200,9 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
+        output = self.net(X.float())
+        output 
+
         return 0 # Replace this code with your own
 
         #######################################################################

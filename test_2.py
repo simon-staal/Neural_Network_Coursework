@@ -5,6 +5,15 @@ import pandas as pd
 from sklearn import preprocessing, impute
 import part2_house_value_regression as lib
 
+def TestProximity():
+    data = pd.read_csv("housing.csv")
+
+    output_label = "median_house_value"
+    x_train = data.loc[:, data.columns != output_label]
+
+    ocean_proximity = x_train['ocean_proximity'].to_numpy()
+    print(ocean_proximity)
+
 def TestPreproc():
     data = pd.read_csv("housing.csv")
 
