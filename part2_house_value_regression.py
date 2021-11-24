@@ -4,6 +4,22 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing, impute
 
+# THIS IS TEMPORARY
+class Net(torch.nn.Module):
+
+    def __init__(self):
+        super(Net, self).__init__()
+        self.input = torch.nn.Linear(13, 15)
+        self.hidden = torch.nn.Linear(15, 5)
+        self.output = torch.nn.Linear(5, 1)
+    
+    def forward(self, x):
+        x = torch.nn.functional.relu(self.input(x))
+        x = torch.nn.functional.relu(self.hidden(x))
+        x = self.output(x)
+
+        return x
+
 class Regressor():
 
     def __init__(self, x, nb_epoch = 1000):
@@ -30,7 +46,8 @@ class Regressor():
         self.x_imp = impute.SimpleImputer(missing_values=np.nan, strategy='mean') # Used to handle empty cells
         self.lb = preprocessing.LabelBinarizer() # Used to handle ocean_proximity
 
-        
+        self.net = Net()
+
         X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
@@ -111,6 +128,7 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        # CHANGE THIS (This works for now lol)
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
 
         loss_metric = torch.nn.MSELoss()
@@ -119,8 +137,8 @@ class Regressor():
 
         for _ in range(self.nb_epoch):
             self.net.zero_grad()
-            output = self.net(X.float())
-            loss = loss_metric(output, Y.float())
+            output = self.net(X)
+            loss = loss_metric(output, Y)
             loss.backward()
             optimizer.step()
 
