@@ -82,16 +82,14 @@ class Regressor():
         #######################################################################
 
         # First we handle the strings
-        if training:
-            self.lb.fit(x['ocean_proximity'])
+        if training: self.lb.fit(x['ocean_proximity'])
         
         proximity = self.lb.transform(x['ocean_proximity'])
         x = x.drop('ocean_proximity', axis=1)
         x = pd.concat([x, pd.DataFrame(proximity)], axis=1)
 
         # Next we impute (deal with empty cells)
-        if training:
-            self.x_imp.fit(x)
+        if training: self.x_imp.fit(x)
 
         x = self.x_imp.transform(x)
 
@@ -100,8 +98,8 @@ class Regressor():
             self.x_scaler.fit(x)
             if isinstance(y, pd.DataFrame): self.y_scaler.fit(y)
 
-        x = self.x_scaler.transform(x)
-        y = self.y_scaler.transform(y) if isinstance(y, pd.DataFrame) else None
+        x = torch.from_numpy(self.x_scaler.transform(x))
+        y = torch.from_numpy(self.y_scaler.transform(y)) if isinstance(y, pd.DataFrame) else None
         
         return x, y
 
@@ -137,8 +135,8 @@ class Regressor():
 
         for _ in range(self.nb_epoch):
             self.net.zero_grad()
-            output = self.net(X)
-            loss = loss_metric(output, Y)
+            output = self.net(X.float())
+            loss = loss_metric(output, Y.float())
             loss.backward()
             optimizer.step()
 
