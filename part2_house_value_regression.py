@@ -70,9 +70,9 @@ class Regressor():
                 testing the model.
 
         Returns:
-            - {torch.tensor} or {numpy.ndarray} -- Preprocessed input array of
+            - {torch.tensor} -- Preprocessed input array of
               size (batch_size, input_size).
-            - {torch.tensor} or {numpy.ndarray} -- Preprocessed target array of
+            - {torch.tensor} -- Preprocessed target array of
               size (batch_size, 1).
 
         """
