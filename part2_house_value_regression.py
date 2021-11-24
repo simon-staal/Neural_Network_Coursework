@@ -49,6 +49,8 @@ class Regressor():
             n_in = layer
         
         self.net = nn.Sequential(*layers) # Stack-Overflow Bless
+        for name, param in self.net.named_parameters():
+            print(f'{name}: {param}')
         self.learning_rate = learning_rate
 
         if loss_fun == "mse":
@@ -139,8 +141,8 @@ class Regressor():
 
         optimizer = torch.optim.SGD(self.net.parameters(), lr = self.learning_rate)
 
-        for _ in range(self.nb_epoch):
-            self.net.zero_grad()
+        for i in range(self.nb_epoch):
+            optimizer.zero_grad()
             output = self.net(X.float())
             loss = self.loss_layer(output, Y.float())
             loss.backward()
@@ -171,10 +173,8 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training = False) # Do not forget
-        output = self.net(X.float())
-        output = output.detach().numpy()
 
-        return output
+        return self.net(X.float()).detach().numpy()
 
 
         #######################################################################
@@ -201,9 +201,8 @@ class Regressor():
 
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
         output = self.net(X.float())
-        output 
-
-        return 0 # Replace this code with your own
+        
+        return self.loss_layer(output, Y.float()) # Replace this code with your own
 
         #######################################################################
         #                       ** END OF YOUR CODE **
@@ -275,7 +274,7 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 10)
+    regressor = Regressor(x_train, nb_epoch = 1000)
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
