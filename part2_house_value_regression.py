@@ -45,6 +45,7 @@ class Regressor():
         self.y_scaler = preprocessing.MinMaxScaler() # Performs min-max scaling on y values
         self.x_imp = impute.SimpleImputer(missing_values=np.nan, strategy='mean') # Used to handle empty cells
         self.lb = preprocessing.LabelBinarizer() # Used to handle ocean_proximity
+        self.string_imp = None # Used to handle empty ocean_proximities
 
         self.net = Net()
 
@@ -82,8 +83,12 @@ class Regressor():
         #######################################################################
 
         # First we handle the strings
+        # Deal with empty cells in string
+        if training: self.string_imp = x['ocean_proximity'].mode()[0]
+        x['ocean_proximity'] = x.loc[:, ['ocean_proximity']].fillna(value=self.string_imp)
+
+        # Replace strings with binary values
         if training: self.lb.fit(x['ocean_proximity'])
-        
         proximity = self.lb.transform(x['ocean_proximity'])
         x = x.drop('ocean_proximity', axis=1)
         x = pd.concat([x, pd.DataFrame(proximity)], axis=1)
@@ -165,7 +170,11 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training = False) # Do not forget
-        pass
+        output = self.net(X.float())
+        output = output.detach().numpy()
+
+        return output
+
 
         #######################################################################
         #                       ** END OF YOUR CODE **
