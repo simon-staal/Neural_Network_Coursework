@@ -2,6 +2,7 @@ import torch
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing, impute
 
 class Regressor():
 
@@ -23,7 +24,13 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        # Replace this code with your own
+        # Values stored for pre-processing
+        self.x_scaler = preprocessing.MinMaxScaler() # Perfoms min-max scaling on x values
+        self.y_scaler = preprocessing.MinMaxScaler() # Performs min-max scaling on y values
+        self.x_imp = impute.SimpleImputer(missing_values=np.nan, strategy='mean') # Used to handle empty cells
+        self.lb = preprocessing.LabelBinarizer() # Used to handle ocean_proximity
+
+        
         X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
@@ -57,9 +64,29 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        # Replace this code with your own
-        # Return preprocessed x and y, return None for y if it was None
-        return x, (y if isinstance(y, pd.DataFrame) else None)
+        # First we handle the strings
+        if training:
+            self.lb.fit(x['ocean_proximity'])
+        
+        proximity = self.lb.transform(x['ocean_proximity'])
+        x = x.drop('ocean_proximity', axis=1)
+        x = pd.concat([x, pd.DataFrame(proximity)], axis=1)
+
+        # Next we impute (deal with empty cells)
+        if training:
+            self.x_imp.fit(x)
+
+        x = self.x_imp.transform(x)
+
+        # If training we initialise our normalisation values
+        if training:
+            self.x_scaler.fit(x)
+            if isinstance(y, pd.DataFrame): self.y_scaler.fit(y)
+
+        x = self.x_scaler.transform(x)
+        y = self.y_scaler.transform(y) if isinstance(y, pd.DataFrame) else None
+        
+        return x, y
 
         #######################################################################
         #                       ** END OF YOUR CODE **
