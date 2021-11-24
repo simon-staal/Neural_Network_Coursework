@@ -112,6 +112,18 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
+
+        loss_metric = torch.nn.MSELoss()
+
+        optimizer = torch.optim.SGD(self.net.parameters(), lr = 0.01)
+
+        for _ in range(self.nb_epoch):
+            self.net.zero_grad()
+            output = self.net(X.float())
+            loss = loss_metric(output, Y.float())
+            loss.backward()
+            optimizer.step()
+
         return self
 
         #######################################################################
