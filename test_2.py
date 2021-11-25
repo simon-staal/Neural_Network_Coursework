@@ -24,14 +24,12 @@ def TestHyperParams():
     x_train = data.loc[:, data.columns != output_label]
     y_train = data.loc[:, [output_label]]
 
-    regressor = lib.Regressor(x_train, nb_epoch = 100)
-    regressor.fit(x_train, y_train)
     params = {
         'learning_rate': [0.001, 0.005],
-        'nb_epoch': [100, 500]
+        'nb_epoch': [100]
     }
 
-    res = lib.RegressorHyperParameterSearch(regressor, x_train, y_train, params)
+    res = lib.RegressorHyperParameterSearch(x_train, y_train, params)
 
     print(res)
     
@@ -49,19 +47,42 @@ def TestPreproc():
     data = pd.read_csv("housing.csv")
 
     output_label = "median_house_value"
-    x_train = data.loc[:, data.columns != output_label]
-    print(x_train[:][:3])
+    x = data.loc[:, data.columns != output_label]
+    y = data.loc[:, [output_label]]
+
+    x_train = x
+    #print(x_train[:][:3])
     x_train['ocean_proximity'][2] = np.nan
-    print(x_train[:][:3])
-    print(x_train['ocean_proximity'].mode()[0])
+    #print(x_train[:][:3])
+    #print(x_train['ocean_proximity'].mode()[0])
 
     regressor = lib.Regressor(x_train, nb_epoch = 10)
-    print(x_train[:][:3])
+    #print(x_train[:][:3])
 
     data_sub = x_train[:5].copy()
     data_sub['ocean_proximity'][3] = np.nan
-    print(data_sub)
-    print(regressor._preprocessor(data_sub))
+    #print(data_sub)
+    regressor._preprocessor(data_sub)
+
+    test = 8
+    dev = 1
+    train = 1
+
+    x_size = len(x.index)
+    fold_size = x_size // (test + dev + train)
+
+    permutation = torch.randperm(x_size)
+    test_split = permutation[:fold_size * test]
+    dev_split = permutation[fold_size * test:fold_size * (test + dev)]
+    train_split = permutation[fold_size * (test + dev):]
+
+    x_train = x.iloc[train_split]
+    y_train = y.iloc[train_split]
+
+    x_dev = x.iloc[dev_split]
+    y_dev = y.iloc[dev_split]
+
+    regressor.fit(x_train, y_train)
 
 if __name__ == "__main__":
     TestHyperParams()

@@ -6,9 +6,17 @@ import pandas as pd
 from sklearn import preprocessing, impute, metrics, model_selection
 from sklearn.base import BaseEstimator
 
+import math
+import copy
+
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 1], learning_rate = 0.1, loss_fun = "mse"):
+    @staticmethod
+    def _init_weights(layer):
+        if type(layer) == nn.Linear:
+            nn.init.xavier_uniform_(layer.weight)
+
+    def __init__(self, x, nb_epoch = 1000, neurons = [100, 100, 1], learning_rate = 0.1, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -32,9 +40,10 @@ class Regressor():
         self.y_scaler = preprocessing.MinMaxScaler() # Performs min-max scaling on y values
         self.x_imp = impute.SimpleImputer(missing_values=np.nan, strategy='mean') # Used to handle empty cells
         self.lb = preprocessing.LabelBinarizer() # Used to handle ocean_proximity
+        self.lb.classes_ = ['<1H OCEAN', 'INLAND', 'ISLAND', 'NEAR BAY', 'NEAR OCEAN']
         self.string_imp = None # Used to handle empty ocean_proximities
 
-        X, _ = self._preprocessor(self.x, training = True)
+        X, _ = self._preprocessor(x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
         self.nb_epoch = nb_epoch
@@ -44,16 +53,18 @@ class Regressor():
         layers = []
         n_in = self.input_size
         for layer in neurons:
-            l = nn.Linear(n_in, layer)
-            nn.init.xavier_uniform_(l.weight)
-            layers.append(l) # Use Linear activation functions only
+            layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
             n_in = layer
 
 
         layers.append(nn.ReLU()) # Use ReLU as final activation function
         
         self.net = nn.Sequential(*layers) # Stack-Overflow Bless
+        self.net.apply(self._init_weights)
+        self.net.double()
+
         self.learning_rate = learning_rate
+        self.early_stop = 100
 
         if loss_fun == "mse":
             self.loss_layer = nn.MSELoss()
@@ -91,21 +102,21 @@ class Regressor():
 
         # First we handle the strings
         # Deal with empty cells in string
+        if training: self.x = x
+
         if training: self.string_imp = x['ocean_proximity'].mode()[0]
         pd.options.mode.chained_assignment = None
         x['ocean_proximity'] = x.loc[:, ['ocean_proximity']].fillna(value=self.string_imp)
 
         # Replace strings with binary values
-        if training: self.lb.fit(x['ocean_proximity'])
         proximity = self.lb.transform(x['ocean_proximity'])
         x = x.drop('ocean_proximity', axis=1)
-        x = pd.concat([x, pd.DataFrame(proximity)], axis=1)
+        x =x.join(pd.DataFrame(proximity))
 
         # Next we impute (deal with empty cells)
         if training: self.x_imp.fit(x)
 
         x = self.x_imp.transform(x)
-
         # If training we initialise our normalisation values
         if training:
             self.x_scaler.fit(x)
@@ -121,7 +132,7 @@ class Regressor():
         #######################################################################
 
         
-    def fit(self, x, y):
+    def fit(self, x, y, dev_x = None, dev_y = None):
         """
         Regressor training function
 
@@ -139,17 +150,55 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        min_loss = 2 ** 30
+        best_iteration = -1
+        best = self
+
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
+
+        X_size = X.size()[0]
+        batch_size = min(64, X_size)
 
         optimizer = torch.optim.Adam(self.net.parameters(), lr = self.learning_rate)
 
         for i in range(self.nb_epoch):
-            optimizer.zero_grad()
-            output = self.net(X.float())
-            loss = self.loss_layer(output, Y.float())
-            loss.backward()
-            optimizer.step()
-            print(f'Loss at epoch {i}: {self.score(x, y)}')
+            running_loss = []
+
+            permutation = torch.randperm(X_size)
+
+            for j in range(0, X_size, batch_size):
+
+                optimizer.zero_grad()
+
+                indices = permutation[j:j+batch_size]
+                batch_X, batch_Y = X[indices], Y[indices]
+
+                output = self.net(batch_X)
+                loss = self.loss_layer(output, batch_Y)
+                loss.backward()
+                optimizer.step()
+                
+                y_hat = self.y_scaler.inverse_transform(output.detach().numpy())
+                y_gold = self.y_scaler.inverse_transform(batch_Y.detach().numpy())
+
+                score = metrics.mean_squared_error(y_gold, y_hat, squared=False)
+                running_loss.append(score)
+                
+            
+            scaled_loss = sum(running_loss)/len(running_loss)
+
+            print(f'Loss at epoch {i}: {scaled_loss}')
+
+            if dev_x is not None and dev_y is not None:
+                validation_loss = self.score(dev_x, dev_y)
+
+                if validation_loss < min_loss:
+                    best = copy.deepcopy(self)
+                    best_iteration = i
+                    min_loss = validation_loss
+                else:
+                    if i - best_iteration > self.early_stop:
+                        return best
 
         return self
 
@@ -176,7 +225,7 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training = False) # Do not forget
-        output = self.net(X.float()).detach().numpy()
+        output = self.net(X).detach().numpy()
 
         return self.y_scaler.inverse_transform(output)
 
@@ -204,7 +253,7 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
-        output = self.net(X.float()).detach().numpy()
+        output = self.net(X).detach().numpy()
 
         y_hat = self.y_scaler.inverse_transform(output)
         y_gold = y.to_numpy()
@@ -228,11 +277,13 @@ class Regressor():
                 layers = []
                 n_in = self.input_size
                 for layer in neurons:
-                    layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
+                    l = nn.Linear(n_in, layer)
+                    nn.init.xavier_uniform_(l.weight)
+                    layers.append(l) # Use Linear activation functions only
                     n_in = layer
 
                 layers.append(nn.ReLU()) # Use ReLU as final activation function
-                self.net = nn.Sequential(*layers) # Stack-Overflow Bless
+                self.net = nn.Sequential(*layers)
 
             setattr(self, param, value)
         return self
@@ -260,7 +311,7 @@ def load_regressor():
 
 
 
-def RegressorHyperParameterSearch(regressor, x, y, params): 
+def RegressorHyperParameterSearch(x, y, params): 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
@@ -280,20 +331,41 @@ def RegressorHyperParameterSearch(regressor, x, y, params):
     #######################################################################
     #                       ** START OF YOUR CODE **
     #######################################################################
-    
-    X, Y = regressor._preprocessor(x, y = y, training = False) # Do not forget
-    # scorer = metrics.make_scorer(regressor.score, greater_is_better=False)
 
+    test = 8
+    dev = 1
+    train = 1
+
+    x_size = len(x.index)
+    fold_size = x_size // (test + dev + train)
+
+    permutation = torch.randperm(x_size)
+    test_split = permutation[:fold_size * test]
+    dev_split = permutation[fold_size * test:fold_size * (test + dev)]
+    train_split = permutation[fold_size * (test + dev):]
+
+    x_train = x.iloc[train_split]
+    y_train = y.iloc[train_split]
+
+    x_dev = x.iloc[dev_split]
+    y_dev = y.iloc[dev_split]
 
     gs = model_selection.GridSearchCV(
-        regressor, 
-        params, 
+        Regressor(x=x_train), 
+        param_grid=params, 
         n_jobs=1, # Set n_jobs to -1 for parallelisation
-        refit=True, 
+        scoring='neg_root_mean_squared_error',
         verbose=2, 
         return_train_score=True)
 
-    gs.fit(x, y)
+    gs.fit(x, y, dev_x=x_dev, dev_y=y_dev)
+
+    print("Grid scores on dev set:")
+    print(gs.best_score_)
+    print("Best learning rate:", gs.best_estimator_.learning_rate)
+    print("Best neuron layout:", gs.best_estimator_.neurons)
+
+    save_regressor(gs.best_estimator_)
 
     return  gs.best_params
 
