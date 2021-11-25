@@ -3,11 +3,12 @@ import torch.nn as nn
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing, impute, metrics
+from sklearn import preprocessing, impute, metrics, model_selection
+from sklearn.base import BaseEstimator
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 1], activations = ["relu", "relu", "relu"], learning_rate = 0.1, loss_fun = "mse"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 1], learning_rate = 0.1, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -26,6 +27,7 @@ class Regressor():
         #######################################################################
 
         # Values stored for pre-processing
+        self.x = x
         self.x_scaler = preprocessing.MinMaxScaler() # Perfoms min-max scaling on x values
         self.y_scaler = preprocessing.MinMaxScaler() # Performs min-max scaling on y values
         self.x_imp = impute.SimpleImputer(missing_values=np.nan, strategy='mean') # Used to handle empty cells
@@ -38,15 +40,15 @@ class Regressor():
         self.nb_epoch = nb_epoch
 
         # Initialising Net stuff
+        self.neurons = neurons # Architecture of net
         layers = []
         n_in = self.input_size
-        for layer, activation in zip(neurons, activations):
-            layers.append(nn.Linear(n_in, layer))
-            if activation == "relu":
-                layers.append(nn.ReLU())
-            elif activation == "sigmoid":
-                layers.append(nn.Sigmoid())
+        for layer in neurons:
+            layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
             n_in = layer
+
+
+        layers.append(nn.ReLU()) # Use ReLU as final activation function
         
         self.net = nn.Sequential(*layers) # Stack-Overflow Bless
         self.learning_rate = learning_rate
@@ -172,8 +174,9 @@ class Regressor():
         #######################################################################
 
         X, _ = self._preprocessor(x, training = False) # Do not forget
+        output = self.net(X.float()).detach().numpy()
 
-        return self.net(X.float()).detach().numpy()
+        return self.y_scaler.inverse_transform(output)
 
 
         #######################################################################
@@ -209,6 +212,28 @@ class Regressor():
         #                       ** END OF YOUR CODE **
         #######################################################################
 
+    def get_params(self, deep=True):
+        return {
+            'x': self.x,
+            'learning_rate': self.learning_rate,
+            'nb_epoch': self.nb_epoch,
+            'neurons': self.neurons
+        }
+
+    def set_params(self, **params):
+        for param, value in params.items():
+            if param == 'neurons':
+                layers = []
+                n_in = self.input_size
+                for layer in neurons:
+                    layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
+                    n_in = layer
+
+                layers.append(nn.ReLU()) # Use ReLU as final activation function
+                self.net = nn.Sequential(*layers) # Stack-Overflow Bless
+
+            setattr(self, param, value)
+
 
 def save_regressor(trained_model): 
     """ 
@@ -232,14 +257,17 @@ def load_regressor():
 
 
 
-def RegressorHyperParameterSearch(): 
+def RegressorHyperParameterSearch(regressor, x, y, params): 
     # Ensure to add whatever inputs you deem necessary to this function
     """
     Performs a hyper-parameter for fine-tuning the regressor implemented 
     in the Regressor class.
 
     Arguments:
-        Add whatever inputs you need.
+        - x {pd.DataFrame} -- Raw input array of shape 
+                (batch_size, input_size).
+        - y {pd.DataFrame} -- Raw ouput array of shape (batch_size, 1).
+        - params {dictionary} -- Dictionary with parameter names (str) as keys and lists of parameter settings to try as values
         
     Returns:
         The function should return your optimised hyper-parameters. 
@@ -249,8 +277,22 @@ def RegressorHyperParameterSearch():
     #######################################################################
     #                       ** START OF YOUR CODE **
     #######################################################################
+    
+    X, Y = regressor._preprocessor(x, y = y, training = False) # Do not forget
+    scorer = metrics.make_scorer(regressor.score, greater_is_better=False)
 
-    return  # Return the chosen hyper parameters
+
+    gs = model_selection.GridSearchCV(
+        regressor, 
+        params, 
+        n_jobs=1, # Set n_jobs to -1 for parallelisation
+        refit=True, 
+        verbose=2, 
+        return_train_score=True)
+
+    gs.fit(X, Y)
+
+    return  gs.best_params
 
     #######################################################################
     #                       ** END OF YOUR CODE **
