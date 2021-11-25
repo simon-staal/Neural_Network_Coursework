@@ -16,7 +16,7 @@ class Regressor():
         if type(layer) == nn.Linear:
             nn.init.xavier_uniform_(layer.weight)
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [100, 100, 1], learning_rate = 0.1, loss_fun = "mse"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [100, 100, 1], learning_rate = 0.001, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -386,19 +386,40 @@ def example_main():
     data = pd.read_csv("housing.csv") 
 
     # Spliting input and output
-    x_train = data.loc[:, data.columns != output_label]
-    y_train = data.loc[:, [output_label]]
+    x = data.loc[:, data.columns != output_label]
+    y = data.loc[:, [output_label]]
+
+    test = 8
+    dev = 1
+    train = 1
+
+    x_size = len(x.index)
+    fold_size = x_size // (test + dev + train)
+
+    permutation = torch.randperm(x_size)
+    test_split = permutation[:fold_size * test]
+    dev_split = permutation[fold_size * test:fold_size * (test + dev)]
+    train_split = permutation[fold_size * (test + dev):]
+
+    x_train = x.iloc[train_split]
+    y_train = y.iloc[train_split]
+
+    x_dev = x.iloc[dev_split]
+    y_dev = y.iloc[dev_split]
+
+    x_test = x.iloc[test_split]
+    y_test = y.iloc[test_split]
 
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 100)
-    regressor.fit(x_train, y_train)
+    regressor = Regressor(x_train, nb_epoch = 1000, neurons = [8, 8, 8, 1])
+    regressor.fit(x_train, y_train, x_dev, y_dev)
     save_regressor(regressor)
 
     # Error
-    error = regressor.score(x_train, y_train)
+    error = regressor.score(x_test, y_test)
     print("\nRegressor error: {}\n".format(error))
 
     # Test predict
