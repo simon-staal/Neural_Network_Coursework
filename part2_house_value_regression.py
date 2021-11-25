@@ -110,8 +110,18 @@ class Regressor():
 
         # Replace strings with binary values
         proximity = self.lb.transform(x['ocean_proximity'])
+
+        df_proximity = pd.DataFrame(proximity)
+
+        for col in range(proximity.shape[1]):
+            s = "bin" + str(col) 
+            df_proximity.rename({col: s}, axis=1, inplace=True)
         x = x.drop('ocean_proximity', axis=1)
-        x =x.join(pd.DataFrame(proximity))
+        #x = pd.concat([x, df_proximity], axis=1)
+        x = x.join(df_proximity)
+
+        #x = x.drop('ocean_proximity', axis=1)
+        #x =x.join(pd.DataFrame(proximity))
 
         # Next we impute (deal with empty cells)
         if training: self.x_imp.fit(x)
@@ -171,6 +181,13 @@ class Regressor():
                 optimizer.zero_grad()
 
                 indices = permutation[j:j+batch_size]
+                '''
+                print(X)
+                print(X.shape)
+                print("----")
+                print(Y)
+                print(Y.shape)
+                '''
                 batch_X, batch_Y = X[indices], Y[indices]
 
                 output = self.net(batch_X)
