@@ -64,7 +64,7 @@ class Regressor():
         self.net.double()
 
         self.learning_rate = learning_rate
-        self.early_stop = 100
+        self.early_stop = 50
 
         if loss_fun == "mse":
             self.loss_layer = nn.MSELoss()
@@ -198,6 +198,7 @@ class Regressor():
                     min_loss = validation_loss
                 else:
                     if i - best_iteration > self.early_stop:
+                        print(f'Best # of epochs: {best_iteration}')
                         return best
 
         return self
