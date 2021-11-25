@@ -187,7 +187,7 @@ class Regressor():
             
             scaled_loss = sum(running_loss)/len(running_loss)
 
-            print(f'Loss at epoch {i}: {scaled_loss}')
+            #print(f'Loss at epoch {i}: {scaled_loss}')
 
             if dev_x is not None and dev_y is not None:
                 validation_loss = self.score(dev_x, dev_y)
@@ -353,7 +353,7 @@ def RegressorHyperParameterSearch(x, y, params):
     gs = model_selection.GridSearchCV(
         Regressor(x=x_train), 
         param_grid=params, 
-        n_jobs=1, # Set n_jobs to -1 for parallelisation
+        n_jobs=-1, # Set n_jobs to -1 for parallelisation
         scoring='neg_root_mean_squared_error',
         verbose=2, 
         return_train_score=True)
@@ -367,7 +367,7 @@ def RegressorHyperParameterSearch(x, y, params):
 
     save_regressor(gs.best_estimator_)
 
-    return  gs.best_params
+    return  gs.best_params_
 
     #######################################################################
     #                       ** END OF YOUR CODE **
