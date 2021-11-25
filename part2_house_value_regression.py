@@ -366,7 +366,7 @@ def RegressorHyperParameterSearch(x, y, params):
     print("Best learning rate:", gs.best_estimator_.learning_rate)
     print("Best neuron layout:", gs.best_estimator_.neurons)
 
-    save_regressor(gs.best_estimator_)
+    #save_regressor(gs.best_estimator_)
 
     return  gs.best_params_
 
@@ -416,7 +416,7 @@ def example_main():
     # to make sure the model isn't overfitting
     regressor = Regressor(x_train, nb_epoch = 1000, neurons = [8, 8, 8, 1])
     regressor.fit(x_train, y_train, x_dev, y_dev)
-    save_regressor(regressor)
+    #save_regressor(regressor)
 
     # Error
     error = regressor.score(x_test, y_test)
