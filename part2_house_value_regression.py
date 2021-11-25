@@ -34,7 +34,7 @@ class Regressor():
         self.lb = preprocessing.LabelBinarizer() # Used to handle ocean_proximity
         self.string_imp = None # Used to handle empty ocean_proximities
 
-        X, _ = self._preprocessor(x, training = True)
+        X, _ = self._preprocessor(self.x, training = True)
         self.input_size = X.shape[1]
         self.output_size = 1
         self.nb_epoch = nb_epoch
@@ -44,7 +44,9 @@ class Regressor():
         layers = []
         n_in = self.input_size
         for layer in neurons:
-            layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
+            l = nn.Linear(n_in, layer)
+            nn.init.xavier_uniform_(l.weight)
+            layers.append(l) # Use Linear activation functions only
             n_in = layer
 
 
@@ -233,6 +235,7 @@ class Regressor():
                 self.net = nn.Sequential(*layers) # Stack-Overflow Bless
 
             setattr(self, param, value)
+        return self
 
 
 def save_regressor(trained_model): 
@@ -279,7 +282,7 @@ def RegressorHyperParameterSearch(regressor, x, y, params):
     #######################################################################
     
     X, Y = regressor._preprocessor(x, y = y, training = False) # Do not forget
-    scorer = metrics.make_scorer(regressor.score, greater_is_better=False)
+    # scorer = metrics.make_scorer(regressor.score, greater_is_better=False)
 
 
     gs = model_selection.GridSearchCV(
@@ -290,7 +293,7 @@ def RegressorHyperParameterSearch(regressor, x, y, params):
         verbose=2, 
         return_train_score=True)
 
-    gs.fit(X, Y)
+    gs.fit(x, y)
 
     return  gs.best_params
 
@@ -317,13 +320,17 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 1000)
+    regressor = Regressor(x_train, nb_epoch = 100)
     regressor.fit(x_train, y_train)
     save_regressor(regressor)
 
     # Error
     error = regressor.score(x_train, y_train)
     print("\nRegressor error: {}\n".format(error))
+
+    # Test predict
+    result = regressor.predict(x_train)
+    print(result)
 
 
 if __name__ == "__main__":
