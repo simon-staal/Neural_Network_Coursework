@@ -277,14 +277,14 @@ class Regressor():
             if param == 'neurons':
                 layers = []
                 n_in = self.input_size
-                for layer in neurons:
-                    l = nn.Linear(n_in, layer)
-                    nn.init.xavier_uniform_(l.weight)
-                    layers.append(l) # Use Linear activation functions only
+                for layer in value:
+                    layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
                     n_in = layer
 
                 layers.append(nn.ReLU()) # Use ReLU as final activation function
                 self.net = nn.Sequential(*layers)
+                self.net.apply(self._init_weights)
+                self.net.double()
 
             setattr(self, param, value)
         return self
