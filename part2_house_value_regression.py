@@ -3,11 +3,11 @@ import torch.nn as nn
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing, impute
+from sklearn import preprocessing, impute, metrics
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [8, 1], activations = ["relu", "relu"], learning_rate = 0.01, loss_fun = "mse"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 1], activations = ["relu", "relu", "relu"], learning_rate = 0.1, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -49,8 +49,6 @@ class Regressor():
             n_in = layer
         
         self.net = nn.Sequential(*layers) # Stack-Overflow Bless
-        for name, param in self.net.named_parameters():
-            print(f'{name}: {param}')
         self.learning_rate = learning_rate
 
         if loss_fun == "mse":
@@ -139,7 +137,7 @@ class Regressor():
 
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
 
-        optimizer = torch.optim.SGD(self.net.parameters(), lr = self.learning_rate)
+        optimizer = torch.optim.Adam(self.net.parameters(), lr = self.learning_rate)
 
         for i in range(self.nb_epoch):
             optimizer.zero_grad()
@@ -147,6 +145,7 @@ class Regressor():
             loss = self.loss_layer(output, Y.float())
             loss.backward()
             optimizer.step()
+            print(f'Loss at epoch {i}: {self.score(x, y)}')
 
         return self
 
@@ -200,9 +199,11 @@ class Regressor():
         #######################################################################
 
         X, Y = self._preprocessor(x, y = y, training = False) # Do not forget
-        output = self.net(X.float())
-        
-        return self.loss_layer(output, Y.float()) # Replace this code with your own
+        output = self.net(X.float()).detach().numpy()
+
+        y_hat = self.y_scaler.inverse_transform(output)
+        y_gold = y.to_numpy()
+        return metrics.mean_squared_error(y_gold, y_hat, squared=False)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
