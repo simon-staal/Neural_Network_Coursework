@@ -3,11 +3,11 @@ import torch.nn as nn
 import pickle
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing, impute
+from sklearn import preprocessing, impute, metrics
 
 class Regressor():
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [8, 1], activations = ["relu", "relu"], learning_rate = 0.1, loss_fun = "mse"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 1], activations = ["relu", "relu", "relu"], learning_rate = 0.1, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -203,8 +203,7 @@ class Regressor():
 
         y_hat = self.y_scaler.inverse_transform(output)
         y_gold = y.to_numpy()
-
-        return ((y_hat - y_gold) ** 2).mean()
+        return metrics.mean_squared_error(y_gold, y_hat, squared=False)
 
         #######################################################################
         #                       ** END OF YOUR CODE **
