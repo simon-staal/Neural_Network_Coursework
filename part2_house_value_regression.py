@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing, impute, metrics, model_selection
 from sklearn.base import BaseEstimator
+import joblib
 
 import math
 import copy
@@ -313,7 +314,8 @@ def save_regressor(trained_model):
     """
     # If you alter this, make sure it works in tandem with load_regressor
     with open('part2_model.pickle', 'wb') as target:
-        pickle.dump(trained_model, target)
+        #pickle.dump(trained_model, target)
+        joblib.dump(trained_model, target)
     print("\nSaved model in part2_model.pickle\n")
 
 
@@ -323,7 +325,8 @@ def load_regressor():
     """
     # If you alter this, make sure it works in tandem with save_regressor
     with open('part2_model.pickle', 'rb') as target:
-        trained_model = pickle.load(target)
+        #trained_model = pickle.load(target)
+        trained_model = joblib.load(target)
     print("\nLoaded model in part2_model.pickle\n")
     return trained_model
 
