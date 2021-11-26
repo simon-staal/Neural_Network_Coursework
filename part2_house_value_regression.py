@@ -5,10 +5,13 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing, impute, metrics, model_selection
 from sklearn.base import BaseEstimator
+import joblib
 
 import math
 import copy
 import sys
+
+#let me commit pls
 
 class Regressor():
 
@@ -114,8 +117,18 @@ class Regressor():
 
         # Replace strings with binary values
         proximity = self.lb.transform(x['ocean_proximity'])
+
+        df_proximity = pd.DataFrame(proximity)
+
+        for col in range(proximity.shape[1]):
+            s = "bin" + str(col) 
+            df_proximity.rename({col: s}, axis=1, inplace=True)
         x = x.drop('ocean_proximity', axis=1)
-        x =x.join(pd.DataFrame(proximity))
+        #x = pd.concat([x, df_proximity], axis=1)
+        x = x.join(df_proximity)
+
+        #x = x.drop('ocean_proximity', axis=1)
+        #x =x.join(pd.DataFrame(proximity))
 
         # Next we impute (deal with empty cells)
         if training: self.x_imp.fit(x)
@@ -176,6 +189,13 @@ class Regressor():
 
                 # Select batch
                 indices = permutation[j:j+batch_size]
+                '''
+                print(X)
+                print(X.shape)
+                print("----")
+                print(Y)
+                print(Y.shape)
+                '''
                 batch_X, batch_Y = X[indices], Y[indices]
 
                 # Forward + Backward Pass
@@ -292,7 +312,8 @@ def save_regressor(trained_model):
     """
     # If you alter this, make sure it works in tandem with load_regressor
     with open('part2_model.pickle', 'wb') as target:
-        pickle.dump(trained_model, target)
+        #pickle.dump(trained_model, target)
+        joblib.dump(trained_model, target)
     print("\nSaved model in part2_model.pickle\n")
 
 
@@ -302,7 +323,8 @@ def load_regressor():
     """
     # If you alter this, make sure it works in tandem with save_regressor
     with open('part2_model.pickle', 'rb') as target:
-        trained_model = pickle.load(target)
+        #trained_model = pickle.load(target)
+        trained_model = joblib.load(target)
     print("\nLoaded model in part2_model.pickle\n")
     return trained_model
 
@@ -422,7 +444,7 @@ def example_main():
     # to make sure the model isn't overfitting
     regressor = Regressor(x_train, nb_epoch = 10000, neurons = [6], learning_rate = 0.005)
     regressor.fit(x_train, y_train, x_dev, y_dev)
-    #save_regressor(regressor)
+    save_regressor(regressor)
 
     # Error
     error = regressor.score(x_test, y_test)
