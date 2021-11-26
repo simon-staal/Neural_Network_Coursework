@@ -426,16 +426,16 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x, nb_epoch = 272, neurons = [12, 8], learning_rate = 0.001, batch_size = 512)
-    regressor.fit(x, y)
+    regressor = Regressor(x_train, nb_epoch = 272, neurons = [12, 8], learning_rate = 0.001, batch_size = 512)
+    regressor.fit(x_train, y_train, x_dev, y_dev)
     save_regressor(regressor)
 
     # Error
-    error = regressor.score(x, y)
+    error = regressor.score(x_test, y_test)
     print("\nRegressor error: {}\n".format(error))
 
     # Test predict
-    result = regressor.predict(x_train)
+    result = regressor.predict(x_test)
     print(result)
 
     # Print stopping time
