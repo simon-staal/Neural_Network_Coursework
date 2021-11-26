@@ -16,6 +16,7 @@ class Regressor():
     def _init_weights(layer):
         if type(layer) == nn.Linear:
             nn.init.xavier_uniform_(layer.weight)
+            layer.bias.data.fill_(0)
 
     def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 8], learning_rate = 0.001, loss_fun = "mse", batch_size = 64):
         # You can add any input parameters you need
