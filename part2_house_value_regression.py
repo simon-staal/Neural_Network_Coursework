@@ -400,9 +400,9 @@ def example_main():
     x = data.loc[:, data.columns != output_label]
     y = data.loc[:, [output_label]]
 
-    test = 10
-    dev = 0
-    train = 0
+    test = 8
+    dev = 1
+    train = 1
 
     x_size = len(x.index)
     fold_size = x_size // (test + dev + train)
@@ -415,31 +415,24 @@ def example_main():
     x_train = x.iloc[train_split]
     y_train = y.iloc[train_split]
 
-    '''
     x_dev = x.iloc[dev_split]
     y_dev = y.iloc[dev_split]
 
     x_test = x.iloc[test_split]
     y_test = y.iloc[test_split]
-    '''
-
-    x_dev = None
-    y_dev = None
-
-    #x_test = None
-    #y_test = None    
+        
 
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 1000, neurons = [12, 8], learning_rate = 0.001, batch_size = 272)
-    regressor.fit(x_train, y_train, x_dev, y_dev)
+    regressor = Regressor(x, nb_epoch = 272, neurons = [12, 8], learning_rate = 0.001, batch_size = 512)
+    regressor.fit(x, y)
     save_regressor(regressor)
 
     # Error
-    #error = regressor.score(x_test, y_test)
-    #print("\nRegressor error: {}\n".format(error))
+    error = regressor.score(x, y)
+    print("\nRegressor error: {}\n".format(error))
 
     # Test predict
     result = regressor.predict(x_train)
