@@ -10,6 +10,9 @@ import math
 import copy
 import sys
 
+from warnings import simplefilter
+simplefilter(action='ignore', category=FutureWarning)
+
 class Regressor():
 
     @staticmethod
@@ -397,9 +400,9 @@ def example_main():
     x = data.loc[:, data.columns != output_label]
     y = data.loc[:, [output_label]]
 
-    test = 8
-    dev = 1
-    train = 1
+    test = 10
+    dev = 0
+    train = 0
 
     x_size = len(x.index)
     fold_size = x_size // (test + dev + train)
@@ -412,27 +415,38 @@ def example_main():
     x_train = x.iloc[train_split]
     y_train = y.iloc[train_split]
 
+    '''
     x_dev = x.iloc[dev_split]
     y_dev = y.iloc[dev_split]
 
     x_test = x.iloc[test_split]
     y_test = y.iloc[test_split]
+    '''
+
+    x_dev = None
+    y_dev = None
+
+    #x_test = None
+    #y_test = None    
 
     # Training
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 1000, neurons = [13, 8], learning_rate = 0.001, batch_size = 512)
+    regressor = Regressor(x_train, nb_epoch = 1000, neurons = [12, 8], learning_rate = 0.001, batch_size = 272)
     regressor.fit(x_train, y_train, x_dev, y_dev)
     save_regressor(regressor)
 
     # Error
-    error = regressor.score(x_test, y_test)
-    print("\nRegressor error: {}\n".format(error))
+    #error = regressor.score(x_test, y_test)
+    #print("\nRegressor error: {}\n".format(error))
 
     # Test predict
     result = regressor.predict(x_train)
     print(result)
+
+    # Print stopping time
+    print("Stopping time:", regressor.best_iteration)
 
 
 if __name__ == "__main__":
