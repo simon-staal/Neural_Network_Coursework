@@ -25,9 +25,9 @@ def TestHyperParams():
     y_train = data.loc[:, [output_label]]
 
     params = {
-        'learning_rate': [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1],
-        'nb_epoch': [500, 1000, 2000],
-        'neurons': [[9, 5, 1], [15, 8, 1], [8, 8, 8, 1]]
+        'learning_rate': [ 0.005, 0.0075, 0.01],
+        'nb_epoch': [1000],
+        'neurons': [[6, 1], [15, 7, 1], [15, 8, 1], [15,9,1], [15,10,1], [15, 11, 1], [15, 7, 7, 1]]
     }
 
     res = lib.RegressorHyperParameterSearch(x_train, y_train, params)

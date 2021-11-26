@@ -16,7 +16,7 @@ class Regressor():
         if type(layer) == nn.Linear:
             nn.init.xavier_uniform_(layer.weight)
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [100, 100, 1], learning_rate = 0.001, loss_fun = "mse"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 8, 1], learning_rate = 0.001, loss_fun = "mse"):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -55,6 +55,7 @@ class Regressor():
         for layer in neurons:
             layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
             n_in = layer
+        layers.append(nn.Linear(n_in, self.output_size))
 
 
         layers.append(nn.ReLU()) # Use ReLU as final activation function
@@ -64,8 +65,7 @@ class Regressor():
         self.net.double()
 
         self.learning_rate = learning_rate
-        self.early_stop = 50
-
+        self.early_stop = 10
         if loss_fun == "mse":
             self.loss_layer = nn.MSELoss()
         else:
@@ -277,9 +277,9 @@ class Regressor():
             if param == 'neurons':
                 layers = []
                 n_in = self.input_size
-                for layer in value:
-                    layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
-                    n_in = layer
+                #for layer in value:
+                    #layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
+                    #n_in = layer
 
                 layers.append(nn.ReLU()) # Use ReLU as final activation function
                 self.net = nn.Sequential(*layers)
@@ -367,7 +367,7 @@ def RegressorHyperParameterSearch(x, y, params):
     print("Best neuron layout:", gs.best_estimator_.neurons)
 
     #save_regressor(gs.best_estimator_)
-
+    
     return  gs.best_params_
 
     #######################################################################
@@ -414,7 +414,7 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 1000, neurons = [8, 8, 8, 1])
+    regressor = Regressor(x_train, nb_epoch = 10000, neurons = [6], learning_rate = 0.005)
     regressor.fit(x_train, y_train, x_dev, y_dev)
     #save_regressor(regressor)
 
