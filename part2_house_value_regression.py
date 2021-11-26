@@ -421,7 +421,7 @@ def example_main():
     # This example trains on the whole available dataset. 
     # You probably want to separate some held-out data 
     # to make sure the model isn't overfitting
-    regressor = Regressor(x_train, nb_epoch = 10000, neurons = [6], learning_rate = 0.005)
+    regressor = Regressor(x_train, nb_epoch = 1000, neurons = [13, 8], learning_rate = 0.001, batch_size = 512)
     regressor.fit(x_train, y_train, x_dev, y_dev)
     save_regressor(regressor)
 
