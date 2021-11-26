@@ -10,7 +10,7 @@ import joblib
 import math
 import copy
 
-#let me commit
+#let me commit pls
 
 class Regressor():
 
@@ -438,7 +438,7 @@ def example_main():
     # to make sure the model isn't overfitting
     regressor = Regressor(x_train, nb_epoch = 1000, neurons = [8, 8, 8, 1])
     regressor.fit(x_train, y_train, x_dev, y_dev)
-    #save_regressor(regressor)
+    save_regressor(regressor)
 
     # Error
     error = regressor.score(x_test, y_test)
