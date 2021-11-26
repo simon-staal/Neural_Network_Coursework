@@ -8,6 +8,7 @@ from sklearn.base import BaseEstimator
 
 import math
 import copy
+import sys
 
 class Regressor():
 
@@ -16,7 +17,7 @@ class Regressor():
         if type(layer) == nn.Linear:
             nn.init.xavier_uniform_(layer.weight)
 
-    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 8, 1], learning_rate = 0.001, loss_fun = "mse"):
+    def __init__(self, x, nb_epoch = 1000, neurons = [8, 8, 8], learning_rate = 0.001, loss_fun = "mse", batch_size = 64):
         # You can add any input parameters you need
         # Remember to set them with a default value for LabTS tests
         """ 
@@ -40,7 +41,7 @@ class Regressor():
         self.y_scaler = preprocessing.MinMaxScaler() # Performs min-max scaling on y values
         self.x_imp = impute.SimpleImputer(missing_values=np.nan, strategy='mean') # Used to handle empty cells
         self.lb = preprocessing.LabelBinarizer() # Used to handle ocean_proximity
-        self.lb.classes_ = ['<1H OCEAN', 'INLAND', 'ISLAND', 'NEAR BAY', 'NEAR OCEAN']
+        self.lb.classes_ = ['<1H OCEAN', 'INLAND', 'ISLAND', 'NEAR BAY', 'NEAR OCEAN'] # Hard code the class labels
         self.string_imp = None # Used to handle empty ocean_proximities
 
         X, _ = self._preprocessor(x, training = True)
@@ -65,7 +66,9 @@ class Regressor():
         self.net.double()
 
         self.learning_rate = learning_rate
-        self.early_stop = 10
+        self.batch_size = batch_size
+        self.early_stop = 20
+        self.best_iteration = -1
         if loss_fun == "mse":
             self.loss_layer = nn.MSELoss()
         else:
@@ -100,12 +103,13 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
+        if training: self.x = x # Need to store this for GridSearchCV (dumb)
+
         # First we handle the strings
         # Deal with empty cells in string
-        if training: self.x = x
-
         if training: self.string_imp = x['ocean_proximity'].mode()[0]
-        pd.options.mode.chained_assignment = None
+
+        pd.options.mode.chained_assignment = None # Suppress warning (it's wrong)
         x['ocean_proximity'] = x.loc[:, ['ocean_proximity']].fillna(value=self.string_imp)
 
         # Replace strings with binary values
@@ -150,55 +154,57 @@ class Regressor():
         #                       ** START OF YOUR CODE **
         #######################################################################
 
-        min_loss = 2 ** 30
-        best_iteration = -1
+        # Tracks parameters for early stopping
+        min_loss = float("inf")
         best = self
 
         X, Y = self._preprocessor(x, y = y, training = True) # Do not forget
 
         X_size = X.size()[0]
-        batch_size = min(64, X_size)
+        batch_size = min(self.batch_size, X_size) # Make sure batches aren't too big
 
         optimizer = torch.optim.Adam(self.net.parameters(), lr = self.learning_rate)
 
         for i in range(self.nb_epoch):
             running_loss = []
 
+            # Use random batches each epoch
             permutation = torch.randperm(X_size)
 
             for j in range(0, X_size, batch_size):
-
                 optimizer.zero_grad()
 
+                # Select batch
                 indices = permutation[j:j+batch_size]
                 batch_X, batch_Y = X[indices], Y[indices]
 
+                # Forward + Backward Pass
                 output = self.net(batch_X)
                 loss = self.loss_layer(output, batch_Y)
                 loss.backward()
                 optimizer.step()
                 
+                # Calculate RMSE for batch
                 y_hat = self.y_scaler.inverse_transform(output.detach().numpy())
-                y_gold = self.y_scaler.inverse_transform(batch_Y.detach().numpy())
-
+                y_gold = y.to_numpy()[indices]
                 score = metrics.mean_squared_error(y_gold, y_hat, squared=False)
                 running_loss.append(score)
                 
-            
+            # Calculate RMSE for epoch
             scaled_loss = sum(running_loss)/len(running_loss)
 
             #print(f'Loss at epoch {i}: {scaled_loss}')
 
+            # Using validation set for early stopping
             if dev_x is not None and dev_y is not None:
                 validation_loss = self.score(dev_x, dev_y)
 
                 if validation_loss < min_loss:
                     best = copy.deepcopy(self)
-                    best_iteration = i
+                    self.best_iteration = i
                     min_loss = validation_loss
                 else:
-                    if i - best_iteration > self.early_stop:
-                        print(f'Best # of epochs: {best_iteration}')
+                    if i - self.best_iteration > self.early_stop:
                         return best
 
         return self
@@ -269,24 +275,14 @@ class Regressor():
             'x': self.x,
             'learning_rate': self.learning_rate,
             'nb_epoch': self.nb_epoch,
-            'neurons': self.neurons
+            'neurons': self.neurons,
+            'batch_size': self.batch_size
         }
 
     def set_params(self, **params):
         for param, value in params.items():
-            if param == 'neurons':
-                layers = []
-                n_in = self.input_size
-                #for layer in value:
-                    #layers.append(nn.Linear(n_in, layer)) # Use Linear activation functions only
-                    #n_in = layer
-
-                layers.append(nn.ReLU()) # Use ReLU as final activation function
-                self.net = nn.Sequential(*layers)
-                self.net.apply(self._init_weights)
-                self.net.double()
-
             setattr(self, param, value)
+        
         return self
 
 
@@ -361,11 +357,21 @@ def RegressorHyperParameterSearch(x, y, params):
 
     gs.fit(x, y, dev_x=x_dev, dev_y=y_dev)
 
+    original_stdout = sys.stdout
+    filename = "results.txt"
+    res = pd.DataFrame(gs.cv_results_)
+    print(f"Saving results to {filename}")
+
+    with open(filename, "w") as outfile:
+        sys.stdout = outfile
+        print(res[['param_batch_size', 'param_learning_rate', 'param_neurons', 'mean_test_score', 'std_test_score', 'mean_train_score']])
+        sys.stdout = original_stdout
+
     print("Grid scores on dev set:")
     print(gs.best_score_)
     print("Best learning rate:", gs.best_estimator_.learning_rate)
     print("Best neuron layout:", gs.best_estimator_.neurons)
-
+    print("Stopping epoch:", gs.best_estimator_.best_iteration)
     #save_regressor(gs.best_estimator_)
     
     return  gs.best_params_
