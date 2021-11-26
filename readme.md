@@ -21,11 +21,11 @@ The implementation of the trained neural network can be found [**here**](part2_h
 -----
 This file can be run using the `python3 test2_py` command. This file can be used to test the hyperparameter tuning of the neural network. The program creates a search space of different parameters to be tested and then calls the `RegressorHyperParameterSearch(x, y, params)` function that tunes the hyperparameters of the model using grid search cross validation.
 
-[**iris.dat*](iris.dat)
+[**iris.dat**](iris.dat)
 -----
 This file contains the Iris dataset which was used to test the neural network mini-library.
 
-[**houseing.csv*](housing.csv)
+[**houseing.csv**](housing.csv)
 -----
 This file contains the raw data our neural network was trained on.
 
