@@ -202,8 +202,8 @@ class Regressor():
                 validation_loss = self.score(dev_x, dev_y)
 
                 if validation_loss < min_loss:
-                    best = copy.deepcopy(self)
                     self.best_iteration = i
+                    best = copy.deepcopy(self)
                     min_loss = validation_loss
                 else:
                     if i - self.best_iteration > self.early_stop:
